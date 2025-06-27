@@ -1,0 +1,457 @@
+
+        <div class="list-wrapper">
+            <div class="">
+                <h1>Students List</h1>
+                <?php if(!empty($_SESSION['submit_status'])): 
+                    $message = $_SESSION['submit_status'];
+                    unset($_SESSION['submit_status']);    
+                ?>
+                <p class="<?= $message['type'] === 'success' ? 'success-alert' : 'warning-alert';?>">
+                    <?= esc_html($message['text']); ?>
+                </p>
+                <?php endif; ?>
+            </div>
+            <form action="" method="POST">
+                <select name="target-exam-id" id="">
+                    <option value="">Select</option> 
+                    <?php while($exams->have_posts()):
+                        $exams->the_post(); ?>
+                        <option value="<?php the_ID();?>"><?php the_title();?></option>
+                    <?php endwhile; wp_reset_postdata(); ?>
+                </select>
+                <div class="exam-input-wrapper">
+                    <label for="due-date">Complete By:</label>
+                    <input type="date" name="exam-due-date">
+                    <input type="time" name="exam-due-time">
+                </div>
+                <?php wp_nonce_field('update_exam', 'user_nonce'); ?>
+                <input type="submit" name="assign_exam_submit" value="Assign Exam">
+                <input type="submit" name="unassign_exam_submit" value="Unassign Exam">
+                <input type="submit" name="edit_completeby_exam_submit" value="Edit Complete By">
+                <?php foreach($students->get_results() as $stu):?>
+                <div class="student-card">
+                    <div class="list-block">
+                        <h3><?php echo esc_html($stu->display_name); ?></h3>
+                        <input type="checkbox" name="student-id[]" value="<?php echo esc_html($stu->ID);?>">
+                    </div>
+                    <div class="student-details">
+                        <div class="assigned-exams">
+                            <h4>Assigned Exams: </h4>
+                            <div class="assigned-exam--list">
+                            <?php
+                            $assigned_exams = getAssignedExams($stu->ID);
+                            while($assigned_exams->have_posts()){
+                                $assigned_exams->the_post();
+                                $examPost = get_field('exam_id', get_the_ID())[0]; 
+                                ?>
+                                
+                                <span class="assigned-exam--title"><?php echo esc_html($examPost->post_title);?></span>
+                            <?php } wp_reset_postdata();?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach ?>
+            </form>
+        </div>
+        
+        <div class="exams">
+            <div class="list-wrapper">
+                <div class="wrapper-heading">
+                    <h1>Active Exams List</h1>
+                    <button class="add-exam">+</button>
+                    <button id="assign_multiple_exams">Assign Multiple Exams</button>
+                </div>
+                <form class="create-exam-form hidden" action="" method="POST">
+                    <div class="exam-input-wrapper">
+                        <label for="examname">Exam Name:</label>
+                        <input type="text" name="examname" placeholder="Enter exam name...">
+                    </div>
+                    <?php wp_nonce_field('create_exam', 'user_nonce')?>
+                    <input type="submit" value="Save">
+                </form>
+                <?php while($exams->have_posts()){
+                    $exams->the_post();
+                    $duration = get_field('duration', get_the_ID());
+                    $hour = '00';
+                    $minute = '00';
+                    if(!empty($duration)){
+                        $hour = $duration['hour'];
+                        $minute = $duration['minute'];
+                    }
+                ?>
+                    <div class="list-block">
+                        <input 
+                            type="checkbox"
+                            name="selected-exams[]" 
+                            value="<?php the_ID();?>"  
+                            id="<?php echo 'exam-' . get_the_ID(); ?>"
+                        >
+                        <h3><a href="<?php the_permalink();?>"><?php the_title(); ?></a></h3>
+                        <h4>
+                            <?php if($hour === '00' && $minute === '00'):?>
+                                No Limited Time
+                            <?php else: ?>
+                                Duration: 
+                                <?php echo esc_attr($hour) . ' : ' . esc_attr($minute)?>
+                            <?php endif; ?>
+                        </h4>
+                        <form class="delete-exam-form" action="" method="POST">
+                            <input type="text" name="exam-id" class="hidden" value="<?php the_ID(); ?>">
+                            <?php wp_nonce_field('delete_exam', 'user_nonce')?>
+                            <input type="submit" value="Delete">
+                        </form>
+                        <form action="" method="POST">
+                            <input type="text" name="exam-id" class="hidden" value="<?php the_ID(); ?>">
+                            <?php wp_nonce_field('edit_due_date', 'user_nonce'); ?>
+                        </form>
+                    </div>
+                <?php } wp_reset_postdata(); ?>
+            </div>
+        </div>
+
+
+
+ ---------------------------------------------------------------------------------------------------
+
+
+
+
+
+ <?php 
+
+$instId = (string) get_current_user_id();
+//redirect if the current user is not instructor
+
+if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['user_nonce'])){
+    if(wp_verify_nonce($_POST['user_nonce'], 'create_exam')){
+        createExam();
+    }
+    elseif(wp_verify_nonce($_POST['user_nonce'], 'delete_exam')){
+        deleteExam();
+    }
+    elseif(wp_verify_nonce($_POST['user_nonce'], 'update_exam')){
+
+        $examId = $_POST['target-exam-id'];
+        $studentIds = $_POST['student-id'];
+        
+
+        if(!isset($studentIds) || !isset($examId)){
+            $_SESSION['submit_status'] = ['type' => 'error', 'text' => 'Please check student and select exam'];
+            wp_redirect($_SERVER['REQUEST_URI']);
+            exit;
+        }
+
+        if(isset($_POST['assign_exam_submit'])){
+            assignExam($studentIds, $examId, $instId);
+        }
+        elseif(isset($_POST['unassign_exam_submit'])){
+            unassignExam($studentIds, $examId);
+        }
+        elseif(isset($_POST['edit_completeby_exam_submit'])){
+            editCompleteBy($studentIds, $examId);
+        }
+    }
+}
+
+function createExam(){
+    if(empty($_POST['examname'])){
+        $_SESSION['submit_status'] = ['type' => 'error', 'text' => 'Enter the exam name'];
+        wp_redirect($_SERVER['REQUEST_URI']);
+        exit;
+    }
+    
+    $examName = sanitize_text_field($_POST['examname']);
+    
+    $post_id = wp_insert_post([
+        'post_title' => $examName,
+        'post_type' => 'exam',
+        'post_status' => 'publish'
+    ]);
+
+    $_SESSION['submit_status'] = ['type' => 'success', 'text' => 'Successfully created!'];
+    wp_redirect($_SERVER['REQUEST_URI']);
+    exit;
+}
+
+function deleteExam(){
+    
+    $exam_id = intval($_POST['exam-id']);
+    if(get_post_type($exam_id) !== 'exam'){
+        $_SESSION['submit_status'] = ['type' => 'error', 'text' => 'Invalid exam ID'];
+        wp_redirect($_SERVER['REQUEST_URI']);
+        exit;
+    }
+
+    wp_delete_post($exam_id, true);
+
+    $_SESSION['submit_status'] = ['type' => 'success', 'text' => 'Exam deleted successfully'];
+    wp_redirect($_SERVER['REQUEST_URI']);
+    exit;
+}
+
+function assignExam($studentIds, $examId, $instId){
+
+    $dueDate = !empty($_POST['exam-due-date']) ? $_POST['exam-due-date'] : '9999-12-31'; 
+    $dueTime = !empty($_POST['exam-due-time']) ? $_POST['exam-due-time'] : '00:00';
+    
+    foreach($studentIds as $studentId){
+        $studentUser = get_user_by('ID', $studentId);
+
+        if(!in_array('student', $studentUser->roles)){
+            continue;
+        }
+
+        // create joint post
+        $assigned_exam_post = wp_insert_post([
+            'post_title' => $studentUser->display_name . '-assigned-' . get_the_title($examId),
+            'post_type' => 'assigned_exam',
+            'post_status' => 'publish'
+        ]);
+
+            if(!is_wp_error($assigned_exam_post)){
+            update_field('exam_id', $examId, $assigned_exam_post);
+            update_field('student_id', $studentId, $assigned_exam_post);
+            update_field('status', 'assigned',$assigned_exam_post );
+            update_field('complete_by', $dueDate . ' ' . $dueTime, $assigned_exam_post);
+            update_field('assigned_by', $instId, $assigned_exam_post);
+        }
+    }
+    
+    $_SESSION['submit_status'] = ['type' => 'success', 'text' => 'Exam assigned successfully'];
+    wp_redirect($_SERVER['REQUEST_URI']);
+    exit;
+}
+
+// function unassignExam($studentIds, $examId){
+//     //find all joint posts that have target exam id
+//     $assignedExamPosts = getAssignedExams($studentIds);
+
+//     //find the joint post that have target student id
+//     while($assignedExamPosts->have_posts()){
+//         $assignedExamPosts->the_post();
+//         $postStudentId = get_field('student_id', get_the_ID());
+//         if(in_array($postStudentId['ID'], $studentIds)){
+//             wp_delete_post(get_the_ID(), true);
+//         }
+//     }
+//     wp_reset_postdata();
+
+//     $_SESSION['submit_status'] = ['type' => 'success', 'text' => 'successfully unassign'];
+//     wp_redirect($_SERVER['REQUEST_URI']);
+//     exit;
+// }
+
+// function editCompleteBy($studentIds, $examId){
+//     $dueDate = !empty($_POST['exam-due-date']) ? $_POST['exam-due-date'] : '9999-12-31'; 
+//     $dueTime = !empty($_POST['exam-due-time']) ? $_POST['exam-due-time'] : '00:00';
+
+//     $newDateTime = $dueDate . ' ' . $dueTime;
+
+//     $assignedExamPosts = getAssignedExams($studentIds);
+
+//     while($assignedExamPosts->have_posts()){
+//         $assignedExamPosts->the_post();
+//         $theAssignedExamPost = get_field('exam_id', get_the_ID())[0];
+//         if(intval($examId) === $theAssignedExamPost->ID){
+//             update_field('complete_by', $newDateTime, get_the_ID());
+//             break;
+//         }
+//     }
+//     wp_reset_postdata();
+
+//     $_SESSION['submit_status'] = ['type' => 'success', 'text' => 'successfully edit the due date'];
+//     wp_redirect($_SERVER['REQUEST_URI']);
+//     exit;
+// }
+
+function getAssignedExams($studentId){
+    $assignedExams = new WP_Query([
+        'posts_per_page' => -1,
+        'post_type' => 'assigned_exam',
+        'meta_query' => [
+            [
+                'key' => 'student_id',
+                'value' => $studentId,
+                'compare' => '='
+            ],
+            [
+                'key' => 'status',
+                'value' => 'assigned',
+                'compare' => '='
+            ]
+        ]
+    ]);
+
+    return $assignedExams;
+}
+
+// function editDueDate(){
+
+//     $dueDate = $_POST['exam-due-date'];
+//     $dueTime = $_POST['exam-due-time'];
+//     $examId = $_POST['exam-id'];
+//     $noDue = isset($_POST['no-due']);
+
+//     $newDueDateTime = '';
+
+//     if(!$noDue){
+//         if(empty($dueDate) || empty($dueTime)){
+//             $_SESSION['submit_status'] = ['type' => 'fail', 'text'=> 'Empty date or time'];
+//             wp_redirect($_SERVER['REQUEST_URI']);
+//             exit;
+//         }
+//         $newDueDateTime = (string) $dueDate . ' ' . (string) $dueTime . ":00";
+//     }
+    
+//     update_field('due_date', $newDueDateTime, $examId);
+//     $_SESSION['submit_status'] = ['type' => 'success', 'text' => 'Successfully updated due'];
+//     wp_redirect($_SERVER['REQUEST_URI']);
+//     exit;
+// }
+
+// write query to get students and exams
+$exams = new WP_Query(array(
+    'posts_per_page' => -1,
+    'post_type' => 'exam',
+    'order' => 'ASC'
+));
+
+$students = new WP_User_Query([
+    'role' => 'student',
+    'orderby' => 'registered',
+    'order' => 'DESC',
+    'number' => -1
+]);
+
+// output code should be the last 
+get_template_part('layout/header');
+?>
+
+<section style="poistion:relative" class="dashboard-inst" data-userid="<?php echo $instId; ?>">
+  <div class="container container-common-flex">
+    <div class="dashboard-inst_students dashboard-left">
+      <h2>Student List</h2>
+      <div class="dashboard-inst_students_cards cards">
+        <?php foreach($students->get_results() as $student):?>
+        <div class="dashboard-inst_students_cards-card card">
+          <div class="dashboard-inst_students_cards-card-top card-top card-top-details">
+            <h5 style="margin: var(--spacing-sm) 0;"><?php echo $student->display_name; ?></h5>
+            <div class="card-details">
+              <button data-student-name="<?php echo $student->display_name?>" data-student-id="<?php echo $student->ID;?>" class="primary-btn select-student-btn">Select</button>
+            </div>
+          </div>
+          <div class="dashboard-inst_students_cards-card-bottom card-bottom">
+            <p>Assigned Exams: </p>
+            <?php $assigned_exam_ids = getAssignedExams($student->ID);
+            while($assigned_exam_ids->have_posts()):
+                $assigned_exam_ids->the_post();
+                $assigned_exam_post = get_field('exam_id', get_the_ID())[0];
+            ?>
+            <span class="assigned-exam">
+                <?php 
+                    echo $assigned_exam_post->post_title;
+                ?>
+            </span>
+            <?php endwhile; ?>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+
+    <div class="dashboard-inst_exams dashboard-right">
+      <div class="flex-between">
+        <h2>Exam List</h2>
+        <div class="">
+            <button id="manage-exam-btn" class="info-btn">Manage Exam(s)</button>
+            <button id="create-new-exam_btn" class="info-btn">Create New Exam</button>
+        </div>
+      </div>
+      <div class="dashboard-inst_exams_cards cards">
+        <?php while($exams->have_posts()):
+          $exams->the_post();
+        ?>
+        <div class="dashboard-inst_exams_cards-card card">
+          <div class="dashboard-inst_exams_cards-card-top card-top-details ">
+            <h5 style="margin: var(--spacing-sm) 0;"><?php echo the_title(); ?></h5>
+            <div class="card-details">
+              <p>Total Question 15</p>
+              <p>Duration : 1h</p>
+            </div>
+          </div>
+          <div class="dashboard-inst_exams_cards-card-bottom card-bottom">
+            <button class="primary-btn select-exam-btn" data-exam-title="<?php echo the_title();?>" data-exam-id="<?php echo the_ID();?>">Select</button>
+            <a href="<?php the_permalink();?>" class="primary-btn">Edit Exam</a>
+            <button class="danger-btn">To Archive</button>
+          </div>
+        </div>
+        <?php endwhile; ?>
+      </div>
+    </div>
+  </div>
+
+  <div class="manage-exam-overlay flex-center hidden">
+    <div class="container flex-center">
+        <h1>Manage Exam(s)</h1>
+        <div class="flex-between selected-items_wrapper">
+            <div>
+                <h5>Selected Exam(s)</h5>
+                <div class="manage-exam-overlay_selected-exams">
+                    <span class="selected-items">Exam1</span>
+                    <span class="selected-items">Exam2</span>
+                </div>
+            </div>
+            <div class="">
+                <h5>Selected Student(s)</h5>
+                <div class="manage-exam-overlay_selected-students">
+
+                </div>
+            </div>
+        </div>
+        <div class="manage-exam_date-input_wrapper">
+            <p>Due Date</p>
+            <div class="flex-center">
+                <div class="">
+                    <input type="date" name="due-date" id="due-date">
+                </div>
+                <div class="br_vertical"></div>
+                <div class="flex-center">
+                    <input type="checkbox" name="no-due-date" id="no-due-date" class="hidden">
+                    <label for="no-due-date">No Due Date</label>
+                </div>
+            </div>
+        </div>
+        <div class="flex-center btns-row">
+            <button class="primary-btn" id="assign-exam_btn">Assign Exam</button>
+            <button class="primary-btn" id="edit-due_btn">Edit Due Date</button>
+            <button class="danger-btn" id="unassign-exam_btn">Unassign Exam</button>
+            <button class="info-btn" id="close-overlay-btn">Close</button>
+        </div>
+    </div>
+  </div>
+
+  <div class="create-exam-window flex-center hidden">
+    <div class="container flex-center">
+        <h1>Create Exam</h1>
+        <div class="create-exam-window_input-wrapper flex-center">
+            <label for="exam-title">Title:</label>
+            <input type="text" id="exam-title" name="exam-title" placeholder="Enter the exam title...">
+        </div>
+        <div class="flex-center btns-row">
+            <button class="primary-btn" id="save-new-exam_btn">Save Exam</button>
+            <button class="info-btn" id="close-exam-window_btn">Close</button>
+        </div>
+    </div>
+  </div>
+
+
+</section>
+
+<?php
+ get_template_part('layout/footer');
+
+?>
+
+
+       

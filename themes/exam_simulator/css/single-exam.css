@@ -1,0 +1,29 @@
+.exam-heading{
+    padding: 1rem;
+}
+
+.quiz-card{
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.quiz-card_top{
+    color: white;
+    background-color: var(--heading-color);
+    padding: 0 2rem;
+}
+
+.quiz-card_top-title{
+    flex: 1;
+    margin: 1rem 0; 
+}
+
+.quiz-card_top-info{
+    column-gap: 1rem;
+}
+
+.quiz-card_top-info button{
+    padding: 0.3rem;
+    font-weight: 600;
+}

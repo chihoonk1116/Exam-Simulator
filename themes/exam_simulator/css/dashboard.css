@@ -1,0 +1,204 @@
+.dashboard-inst_students_cards-card-bottom{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 0.3rem;
+    
+}
+
+.dashboard-inst_students_cards-card-bottom p{
+    margin: 0.4rem 4px 0.4rem 0;
+}
+
+.dashboard-inst_exams_cards-card-bottom{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    column-gap: 0.5rem;
+    box-sizing: border-box;
+    padding: 1rem 0;
+}
+
+.create-exam-window,
+.manage-exam-overlay{
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.create-exam-window .container,
+.manage-exam-overlay .container{
+    max-width: 50vw;
+    background-color: white;
+    text-align: center;
+    flex-direction: column;
+    box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    overflow: hidden;
+    padding: 0 2rem 2rem 2rem;
+}
+
+.create-exam-window .container h1,
+.manage-exam-overlay .container h1{
+    margin: 0 0 1rem 0;
+    padding: 1rem 2rem;
+    width: 100%;
+    background-color: var(--heading-color);
+    color:white;
+}
+
+.create-exam-window .container p,
+.manage-exam-overlay .container p{
+    margin: 0.5rem 0;
+}
+
+.create-exam-window_input-wrapper{
+    margin: 1rem 0 2rem 0;
+}
+
+.create-exam-window_input-wrapper label{
+    font-size: 1rem;
+    text-transform: capitalize;
+    font-weight: 600;
+}
+
+.create-exam-window_input-wrapper input{
+    padding: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-color-dark);
+    border-radius: 10px;
+}
+
+.selected-items_wrapper{
+    width: 100%;
+    justify-content: space-around;
+    margin-bottom: 2rem;
+}
+
+.selected-items,
+.assigned-exam{
+    padding: 0.4rem;
+    background-color: var(--primary-color);
+    font-size: 0.9rem;
+    border-radius: 5px;
+}
+
+.assigned-exam{
+    margin: 0.4rem 0;
+}
+
+.manage-exam_date-input_wrapper{
+    margin: 1rem 0 2rem 0;
+    column-gap: 1rem;
+}
+
+.manage-exam_date-input_wrapper > div{
+    column-gap: 1rem;
+}
+
+.manage-exam-overlay_selected-exams,
+.manage-exam-overlay_selected-students{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    column-gap: 0.3rem;
+}
+
+/* instructor dashboard */
+
+input[type="submit"]{
+    background-color: white;
+    color: var(--main-heading-color);
+    border: 0;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+input[type="submit"]:hover{
+    color: white;
+    background-color: var(--main-background-color);
+}
+
+/* student */
+.student-card{
+    border: 1px solid white;
+    margin: var(--spacing-sm) 0;
+}
+
+.student-details{
+    border-top: 1px solid var(--color-grey);
+}
+
+.student-details .assigned-exams{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.assigned-exams h4{
+    margin: var(--spacing-sm) 0;
+}
+
+.assigned-exam--list{
+    display: flex;
+    column-gap: var(--spacing-sm);
+    font-size: 14px;
+    text-align: center;
+}
+
+.assigned-exam--title{
+    text-transform: capitalize;
+}
+
+.delete-assigned-exam-form input[type='submit']{
+    padding: 3px 5px;
+    font-size: 10px;
+}
+
+/* exam */
+
+.exams{
+    width: 100%;
+}
+
+.add-exam{
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.exam-input-wrapper{
+   display: flex;
+   column-gap: var(--spacing-sm);
+}
+
+.create-exam-form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--main-background-color);
+    row-gap: var(--spacing-sm);
+    margin: var(--spacing-sm) 0;
+    padding: var(--spacing-lg);
+}
+
+
+/* student dashboard */
+.left-block{
+    width: 100%;
+}
+
+.info-box{
+    margin-top: var(--spacing-sm);
+    background-color: white;
+    border-top: 1px solid var(--color-grey);
+}
+
+.score-card{
+    flex-direction: column;
+    align-items: flex-start;
+}
+
