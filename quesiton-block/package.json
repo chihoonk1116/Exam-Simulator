@@ -1,1 +1,17 @@
-
+{
+  "name": "question-block",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test.js",
+  "scripts": {
+    "build": "wp-scripts build src/edit.js src/front.js",
+    "start": "wp-scripts start src/edit.js src/front.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@wordpress/scripts": "^30.1.0"
+  }
+}

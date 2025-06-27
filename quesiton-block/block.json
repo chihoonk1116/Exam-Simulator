@@ -1,0 +1,20 @@
+{
+  "apiVersion": 2,
+  "name": "custom/question-block",
+  "title": "Question Block",
+  "category": "widgets",
+  "icon": "editor-help",
+  "description": "Add a question with multiple answers.",
+  "keywords": ["question", "quiz", "answer"],
+  "textdomain": "question-block",
+  "editorScript": "file:./build/edit.js",
+  "editorStyle":"file:./build/edit.css",
+  "attributes": {
+    "questionId": {
+      "type": "number"
+    }
+  },
+  "supports": {
+    "html": false
+  }
+}

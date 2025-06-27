@@ -1,0 +1,40 @@
+:root{
+    --spacing-lg : 1.2rem;
+    --spacing-md : 1rem;
+    --spacing-sm : 0.7rem;
+    --main-background-color: #19B697;
+    --main-heading-color: #159B81;
+    --color-grey: #DADCE0;
+    --color-warning: #CF0409;
+}
+
+.quiz-block{
+    background-color: var(--main-background-color);
+    border: 1px solid var(--color-grey);
+    margin: var(--spacing-sm) 0;
+    padding: var(--spacing-sm);
+    box-sizing: border-box;
+}
+
+.quiz-heading{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.quiz-block h3{
+    margin: 0.5rem 0;
+}
+
+select{
+    width: 100%;
+}
+
+option{
+    font-weight: 600;
+}
+
+option:disabled{
+    opacity: 0.1;
+    font-weight: 200;
+}
